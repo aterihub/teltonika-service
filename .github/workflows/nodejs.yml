@@ -56,4 +56,4 @@ jobs:
           docker rmi sigitnurmajid/teltonika-service:main
           docker pull sigitnurmajid/teltonika-service:main
 
-          docker run -t -d -p 1337:1337 --env-file .env.teltonika --name teltonika-service sigitnurmajid/teltonika-service:main
+          docker run -t -d -p 1337:1337 --net docker-compose-vms_vms-networks --env-file .env.teltonika --name teltonika-service sigitnurmajid/teltonika-service:main
