@@ -2,7 +2,7 @@ name: Teltonika Service CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "refactor-dev" ]
 
 jobs:
 
