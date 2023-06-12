@@ -2,23 +2,17 @@ import * as net from 'net'
 import axios from 'axios'
 import crc from 'crc';
 import { Point } from '@influxdata/influxdb-client'
-import { BackedConfig } from './config';
 
 export class Parser {
   constructor(
     private data: Buffer,
-    private sock: net.Socket,
-    private redis: any
+    private client: net.Socket
   ) {
   }
 
   public points: Array<Point> = []
 
-  async parse() {
-    // check preamble
-    const preamble = this.data.subarray(0, 4)
-    if (preamble.compare(Buffer.from([0x00, 0x00, 0x00, 0x00])) !== 0) return this.imeiCheck()
-
+  async parse(imei : string) {
     const dataFieldLength = this.data.subarray(4, 8).readInt32BE(0)
     const mainData = this.data.subarray(8, dataFieldLength + 8)
 
@@ -52,12 +46,12 @@ export class Parser {
       const timestamp = this.timestampCalc(timestampRaw)
 
       // get imei
-      const imei = await this.getImei()
+      // const imei = await this.getImei()
 
       // calculate gps
       const gps = this.gpsCalc(gpsElementRaw)
 
-      if (imei === '') return this.logError('IMEI not found on redis')
+      // if (imei === '') return this.logError('IMEI not found on redis')
 
       const eventIOId = ioElementRaw.subarray(0, 2)
       const nOfTotalId = ioElementRaw.subarray(2, 4).readInt16BE(0)
@@ -79,7 +73,7 @@ export class Parser {
           i += 0
 
           const point = new Point(imei)
-            .stringField('IPAddress', this.sock.remoteAddress!)
+            .stringField('IPAddress', this.client.remoteAddress!)
             .tag('AVLId', ioId.readInt16BE(0).toString())
             .tag('event', (eventIOId.compare(ioId) === 0) ? 'true' : 'false')
             .tag('priority', priorityRaw.readInt16BE(0).toString())
@@ -121,45 +115,8 @@ export class Parser {
       avlCount += 1
     }
     const prefix = Buffer.from([0x00, 0x00, 0x00])
-    this.sock.write(Buffer.concat([prefix, numberOfDataStart]))
+    this.client.write(Buffer.concat([prefix, numberOfDataStart]))
     return
-  }
-
-  async getImei() {
-    const imei = await this.redis.get(`imei/${this.sock.remoteAddress}/${this.sock.remotePort}`)
-    if (typeof (imei) === 'string') {
-      return imei
-    }
-    return ''
-  }
-
-  async imeiCheck(): Promise<void> {
-    const imeiLength = this.data.subarray(0, 2).readInt16BE(0)
-
-    if (imeiLength !== 15) return
-
-    const imei = this.data.subarray(2, this.data.length).toString()
-
-    try {
-      const responseCheckImei = await axios.get(`${BackedConfig.url}/v1/api/devices/${imei}`)
-      if (responseCheckImei.status !== 200) return
-
-      this.sock.write('01', 'hex')
-      await this.redis.set(`imei/${this.sock.remoteAddress}/${this.sock.remotePort}`, imei)
-
-      this.logError(`${imei} accepted to connect server`)
-
-      const statusTcpPoint = new Point('TCPStatus')
-        .tag('imei', imei)
-        .stringField('status', 'ONLINE')
-        .stringField('IPAddress', this.sock.remoteAddress)
-        .stringField('port', this.sock.remotePort)
-
-      this.points.push(statusTcpPoint)
-      return
-    } catch (error: any) {
-      console.error(error.message)
-    }
   }
 
   crcCalc(data: Buffer) {
@@ -167,7 +124,7 @@ export class Parser {
   }
 
   logError(message: string) {
-    console.log(new Date().toISOString() + ' ' + this.sock.remoteAddress! + ' ' + message)
+    console.log(new Date().toISOString() + ' ' + this.client.remoteAddress! + ' ' + message)
   }
 
   timestampCalc(timestamp: Buffer): Date {

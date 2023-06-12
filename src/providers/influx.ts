@@ -1,5 +1,5 @@
 import { InfluxDB, Point } from '@influxdata/influxdb-client'
-import { IInfluxConfig } from './config'
+import { IInfluxConfig } from '../configs/influx'
 
 export class InfluxDriver {
   private influxClient: InfluxDB
