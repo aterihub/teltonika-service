@@ -20,8 +20,6 @@ export class TCPServerFactory {
     this.redis = createClient({
       url: `redis://${RedisConfig.username}:${RedisConfig.password}@${RedisConfig.host}:6379`
     })
-
-    this.redis.del()
   }
 
   async listen() {
