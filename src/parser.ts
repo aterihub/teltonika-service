@@ -1,5 +1,4 @@
 import * as net from 'net'
-import axios from 'axios'
 import crc from 'crc';
 import { Point } from '@influxdata/influxdb-client'
 
