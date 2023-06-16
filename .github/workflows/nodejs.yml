@@ -50,10 +50,10 @@ jobs:
         port: ${{ secrets.SSH_PORT }}
         script: |
           echo "${{ secrets.ENV_FILE_PRODUCTION }}" > .env.teltonika
-          docker stop teltonika-service
-          docker rm teltonika-service
+          sudo docker stop teltonika-service
+          sudo docker rm teltonika-service
 
-          docker rmi sigitnurmajid/teltonika-service:refactor-dev
-          docker pull sigitnurmajid/teltonika-service:refactor-dev
+          sudo docker rmi sigitnurmajid/teltonika-service:refactor-dev
+          sudo docker pull sigitnurmajid/teltonika-service:refactor-dev
 
-          docker run -t -d -p 1337:1337 --net docker-compose-vms_vms-networks --env-file .env.teltonika --name teltonika-service sigitnurmajid/teltonika-service:refactor-dev
+          sudo docker run -t -d -p 1337:1337 --net docker-compose-vms_vms-networks --env-file .env.teltonika --name teltonika-service sigitnurmajid/teltonika-service:refactor-dev
