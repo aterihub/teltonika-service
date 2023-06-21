@@ -11,7 +11,7 @@ export class Parser {
 
   public points: Array<Point> = []
 
-  async parse(imei : string) {
+  async parse(imei: string) {
     const dataFieldLength = this.data.subarray(4, 8).readInt32BE(0)
     const mainData = this.data.subarray(8, dataFieldLength + 8)
 
@@ -86,17 +86,20 @@ export class Parser {
             .stringField('storedTime', new Date().toISOString())
             .timestamp(timestamp)
 
-            const gsmSignalAvlId = ioId.readInt16BE(0).toString()
+          const gsmSignalAvlId = ioId.readInt16BE(0).toString()
 
+          if (gsmSignalAvlId === '21') {
             const locationPoint = new Point('geolocation')
-            .tag('imei', imei)
-            .stringField('latitude', gps.latitude)
-            .stringField('longitude', gps.longitude)
-            .stringField('sat_quantity', gps.satellites.toString())
-            .stringField('course', gps.angle.toString())
-            .stringField('altitude', gps.altitude.toString())
-            .stringField('gsm_signal', (gsmSignalAvlId === '21') ? this.hexToNumber(ioValue).toString() : '0')
-            .timestamp(timestamp)
+              .tag('imei', imei)
+              .stringField('latitude', gps.latitude)
+              .stringField('longitude', gps.longitude)
+              .stringField('sat_quantity', gps.satellites.toString())
+              .stringField('course', gps.angle.toString())
+              .stringField('altitude', gps.altitude.toString())
+              .stringField('gsm_signal', this.hexToNumber(ioValue).toString())
+              .timestamp(timestamp)
+            this.points.push(locationPoint)
+          }
 
           if (ioId.readInt16BE(0).toString() === '145' || ioId.readInt16BE(0).toString() === '146') {
             const maskingBit = 65535
@@ -112,7 +115,6 @@ export class Parser {
             point.stringField('decodeData', '0')
           }
 
-          this.points.push(locationPoint)
           this.points.push(point)
         }
         nx += 1
