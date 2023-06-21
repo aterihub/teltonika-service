@@ -86,6 +86,18 @@ export class Parser {
             .stringField('storedTime', new Date().toISOString())
             .timestamp(timestamp)
 
+            const gsmSignalAvlId = ioId.readInt16BE(0).toString()
+
+            const locationPoint = new Point('geolocation')
+            .tag('imei', imei)
+            .stringField('latitude', gps.latitude)
+            .stringField('longitude', gps.longitude)
+            .stringField('sat_quantity', gps.satellites.toString())
+            .stringField('course', gps.angle.toString())
+            .stringField('altitude', gps.altitude.toString())
+            .stringField('gsm_signal', (gsmSignalAvlId === '21') ? this.hexToNumber(ioValue).toString() : '0')
+            .timestamp(timestamp)
+
           if (ioId.readInt16BE(0).toString() === '145' || ioId.readInt16BE(0).toString() === '146') {
             const maskingBit = 65535
             const bitCount = Math.log2(maskingBit + 1)
@@ -100,6 +112,7 @@ export class Parser {
             point.stringField('decodeData', '0')
           }
 
+          this.points.push(locationPoint)
           this.points.push(point)
         }
         nx += 1
