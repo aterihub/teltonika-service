@@ -1,4 +1,3 @@
-import { Point } from "@influxdata/influxdb-client"
 import { InfluxConfig } from "../configs/influx"
 import { InfluxDriver } from "../providers/influx"
 import * as net from 'net'

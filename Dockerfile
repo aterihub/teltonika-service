@@ -2,6 +2,7 @@ FROM node:16.15.1-alpine as base
 RUN apk add --no-cache git
 WORKDIR /usr/app
 EXPOSE 1337
+EXPOSE 9200
 COPY package*.json ./
 RUN npm install
 COPY . .
