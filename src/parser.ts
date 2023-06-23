@@ -63,6 +63,17 @@ export class Parser {
         let n1OfOneByteIo = ioElementRaw.subarray(indexAddress, indexAddress + 2).readInt16BE(0)
         indexAddress += 2
         let i = 0
+
+        const locationPoint = new Point('geolocation')
+          .tag('imei', imei)
+          .stringField('latitude', gps.latitude)
+          .stringField('longitude', gps.longitude)
+          .stringField('sat_quantity', gps.satellites.toString())
+          .stringField('course', gps.angle.toString())
+          .stringField('altitude', gps.altitude.toString())
+          .stringField('stored_time', new Date().toISOString())
+          .timestamp(timestamp)
+
         while (indexId < n1OfOneByteIo) {
           const ioId = ioElementRaw.subarray(indexAddress, indexAddress + i + 2)
           const ioValue = ioElementRaw.subarray(indexAddress + 2, indexAddress + 1 + (2 ** nx) + 1)
@@ -88,18 +99,18 @@ export class Parser {
 
           const gsmSignalAvlId = ioId.readInt16BE(0).toString()
 
-          if (gsmSignalAvlId === '21') {
-            const locationPoint = new Point('geolocation')
-              .tag('imei', imei)
-              .stringField('latitude', gps.latitude)
-              .stringField('longitude', gps.longitude)
-              .stringField('sat_quantity', gps.satellites.toString())
-              .stringField('course', gps.angle.toString())
-              .stringField('altitude', gps.altitude.toString())
-              .stringField('gsm_signal', this.hexToNumber(ioValue).toString())
-              .timestamp(timestamp)
-            this.points.push(locationPoint)
-          }
+          if (gsmSignalAvlId === '21') locationPoint.stringField('gsm_signal', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '69') locationPoint.stringField('fix_flag', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '182') locationPoint.stringField('hdop', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '24') locationPoint.stringField('speed', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '66') locationPoint.floatField('external_power', this.hexToNumber(ioValue))
+          if (gsmSignalAvlId === '67') locationPoint.floatField('internal_battery', this.hexToNumber(ioValue))
+          if (gsmSignalAvlId === '181') locationPoint.stringField('gnss_pdop', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '205') locationPoint.stringField('gsm_cell_id', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '206') locationPoint.stringField('gsm_area_code', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '241') locationPoint.stringField('active_gsm_operator', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '113') locationPoint.stringField('battery_level', this.hexToNumber(ioValue).toString())
+          if (gsmSignalAvlId === '68') locationPoint.stringField('battery_current', this.hexToNumber(ioValue).toString())
 
           if (ioId.readInt16BE(0).toString() === '145' || ioId.readInt16BE(0).toString() === '146') {
             const maskingBit = 65535
@@ -119,6 +130,8 @@ export class Parser {
         }
         nx += 1
         indexId = 0
+
+        this.points.push(locationPoint)
       }
       while (nx <= 3) {
         indexAddress += 2
