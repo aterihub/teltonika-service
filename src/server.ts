@@ -39,6 +39,8 @@ export class TCPServerFactory {
     });
 
     this.server.on('connection', (sock) => {
+      sock.setKeepAlive(true,25000)
+
       console.log(new Date().toISOString() + ' CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort)
 
       this.sockets.push(sock)
