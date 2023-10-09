@@ -2,7 +2,7 @@ name: Teltonika Service CI/CD
 
 on:
   push:
-    branches: [ "refactor-dev" ]
+    branches: [ "main" ]
 
 jobs:
 
@@ -46,14 +46,14 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
-        password: ${{ secrets.SSH_PASSWORD }}
+        key: ${{secrets.SSH_KEY}}
         port: ${{ secrets.SSH_PORT }}
         script: |
           echo "${{ secrets.ENV_FILE_PRODUCTION }}" > .env.teltonika
           sudo docker stop teltonika-service
           sudo docker rm teltonika-service
 
-          sudo docker rmi sigitnurmajid/teltonika-service:refactor-dev
-          sudo docker pull sigitnurmajid/teltonika-service:refactor-dev
+          sudo docker rmi sigitnurmajid/teltonika-service:main
+          sudo docker pull sigitnurmajid/teltonika-service:main
 
-          sudo docker run -t -d -p 1337:1337 -p 9200:9200 --net docker-compose-vms_vms-networks --env-file .env.teltonika --name teltonika-service sigitnurmajid/teltonika-service:refactor-dev
+          sudo docker run -t -d -p 1337:1337 -p 9200:9200 --net docker-compose-vms_vms-networks --env-file .env.teltonika --name teltonika-service sigitnurmajid/teltonika-service:main
