@@ -14,6 +14,7 @@
     "crc": "^4.3.2",
     "dotenv": "^16.0.3",
     "redis": "^4.6.5",
-    "struct": "^0.0.12"
+    "struct": "^0.0.12",
+    "teltonika-parser": "^0.0.15"
   }
 }
