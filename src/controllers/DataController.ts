@@ -84,7 +84,7 @@ export default class DataController {
     const imei = this.data.subarray(2, this.data.length).toString()
 
     try {
-      const responseCheckImei = await axios.get(`${BackedConfig.url}/v1/api/devices/${imei}`)
+      const responseCheckImei = await axios.get(`${BackedConfig.url}/api/v1/devices/${imei}`)
       if (responseCheckImei.status !== 200) return
 
       this.client.write('01', 'hex')
