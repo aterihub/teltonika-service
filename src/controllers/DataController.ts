@@ -61,7 +61,7 @@ export default class DataController {
 
     // Send response to client
     const prefix = Buffer.from([0x00, 0x00, 0x00])
-    this.write(this.client, Buffer.concat([prefix, result.countData]))
+    this.write(this.client, Buffer.concat([prefix, result.countData]), () => {})
     return
   }
 
