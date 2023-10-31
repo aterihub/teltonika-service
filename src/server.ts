@@ -88,7 +88,7 @@ export class TCPServerFactory {
         const socket = this.sockets.find((x) => (
           x.imei === imei
         ))
-        const length = data.subarray(18, 19).readInt16BE()
+        const length = data.subarray(18, 19).readUint8()
         const command = data.subarray(19, length + 19)
         socket?.client.write(command)
       })
