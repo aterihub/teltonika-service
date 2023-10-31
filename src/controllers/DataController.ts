@@ -7,11 +7,12 @@ import StatusController from "./StatusController"
 import DataParser from "../parser/DataParser"
 import crc from 'crc'
 import { Point } from "@influxdata/influxdb-client"
+import { ISocket } from "../parser/types/type"
 
 export default class DataController {
   private influx: InfluxDriver
 
-  constructor(public data: Buffer, public client: net.Socket, public redis: any) {
+  constructor(public data: Buffer, public client: net.Socket, public redis: any, public sockets: Array<ISocket>) {
     const influx = new InfluxDriver(InfluxConfig)
     this.influx = influx
   }
@@ -50,7 +51,7 @@ export default class DataController {
         .stringField('event_io', data.eventId.toString())
         .stringField('io_count', data.ioCount.toString())
         .timestamp(data.timestamp)
-        
+
       data.io.forEach(io => {
         point.stringField(io.id.toString(), io.value)
       })
@@ -60,7 +61,7 @@ export default class DataController {
 
     // Send response to client
     const prefix = Buffer.from([0x00, 0x00, 0x00])
-    this.client.write(Buffer.concat([prefix, result.countData]))
+    this.write(this.client, Buffer.concat([prefix, result.countData]))
     return
   }
 
@@ -77,27 +78,40 @@ export default class DataController {
   }
 
   async imeiCheck(): Promise<void> {
+    // Check imei length
     const imeiLength = this.data.subarray(0, 2).readInt16BE(0)
-
     if (imeiLength !== 15) return
 
+    // Check imei from tcp stream data
     const imei = this.data.subarray(2, this.data.length).toString()
 
-    try {
-      const responseCheckImei = await axios.get(`${BackedConfig.url}/api/v1/devices/${imei}`)
-      if (responseCheckImei.status !== 200) return
+    // Check if imei available on FMS-BE
+    const responseCheckImei = await axios.get(`${BackedConfig.url}/api/v1/devices/${imei}`)
+    if (responseCheckImei.status !== 200) return
 
-      this.client.write('01', 'hex')
+    // Write accepted tcp stream to device Teltonika and store imei to redis
+    this.write(this.client, Buffer.from([0x01]), async () => {
       await this.redis.set(`imei/${this.client.remoteAddress}/${this.client.remotePort}`, imei)
+
+      const statusController = new StatusController(this.client, this.redis)
+      await statusController.store('ONLINE')
 
       this.logError(`${imei} accepted to connect server`)
 
-      const statusController = new StatusController(this.client, this.redis)
-      statusController.store('ONLINE')
-      return
+      // Set imei to ISocket object
+      const socket = this.sockets.find(({ client }) => (
+        client === this.client
+      ))
+      socket!.imei = imei
+    })
+    return
+  }
 
-    } catch (error: any) {
-      console.error(error.message)
+  write(client: net.Socket, data: Buffer, cb?: any) {
+    if (!client.write(data, 'hex')) {
+      client.once('drain', cb);
+    } else {
+      process.nextTick(cb);
     }
   }
 }

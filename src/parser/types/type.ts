@@ -1,3 +1,5 @@
+import * as net from 'net'
+
 export type AVLData = {
   timestamp: Date
   priority: number
@@ -20,4 +22,9 @@ export type IOElement = {
 export interface IPacketResult {
   packet: Array<AVLData>,
   countData: Buffer
+}
+
+export interface ISocket {
+  imei?: string
+  client: net.Socket
 }
