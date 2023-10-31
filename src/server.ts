@@ -88,9 +88,12 @@ export class TCPServerFactory {
         const socket = this.sockets.find((x) => (
           x.imei === imei
         ))
+        if (socket === undefined) return sock.write('There\'s no device with imei' + imei)
+
         const length = data.subarray(18, 19).readUint8()
         const command = data.subarray(19, length + 19)
-        socket?.client.write(command)
+        if (!socket?.client.write(command)) return sock.write('There\'s error when write command to' + imei)
+        return sock.write('Command sent succesfully to imei' + imei)
       })
 
       sock.on('close', async () => {
