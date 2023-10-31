@@ -56,9 +56,14 @@ export class TCPServerFactory {
         clientForwarder.write(sock.remoteAddress! + ' - ' + data.toString('hex'));
       })
 
-      // Handle connection error device
+      // Handle connection if device close connection
       sock.on('close', async () => {
         this.errorConnection(sock, 'CLOSED')
+      })
+
+      // Create error log when device connection error
+      sock.on('error', async (error) => {
+        console.log(new Date().toISOString() + ` ERROR ${error.message} ` + sock.remoteAddress + ':' + sock.remotePort)
       })
     })
 
