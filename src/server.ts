@@ -44,7 +44,7 @@ export class TCPServerFactory {
       sock.setKeepAlive(true, 25000)
 
       // If there's new connection came up will print logs
-      console.log(new Date().toISOString() + ' CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort)
+      console.log(new Date().toISOString() + ' CONNECTED ' + sock.remoteAddress + ':' + sock.remotePort)
 
       this.sockets.push({ client: sock })
 
@@ -71,7 +71,7 @@ export class TCPServerFactory {
       // Set keep alive TCP client
       sock.setKeepAlive(true, 25000)
 
-      console.log(new Date().toISOString() + ' CLIENT LOGGER CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort)
+      console.log(new Date().toISOString() + ' CLIENT LOGGER CONNECTED ' + sock.remoteAddress + ':' + sock.remotePort)
 
       this.socketForwaders.push(sock)
 
@@ -94,7 +94,11 @@ export class TCPServerFactory {
       })
 
       sock.on('close', async () => {
-        console.log(new Date().toISOString() + ' CLIENT LOGGER CLOSE: ' + sock.remoteAddress + ':' + sock.remotePort)
+        console.log(new Date().toISOString() + ' CLIENT LOGGER CLOSE ' + sock.remoteAddress + ':' + sock.remotePort)
+      })
+
+      sock.on('error', async (error) => {
+        console.log(new Date().toISOString() + ` CLIENT LOGGER ERROR ${error.message} ` + sock.remoteAddress + ':' + sock.remotePort)
       })
     })
   }
