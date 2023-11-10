@@ -1,26 +1,26 @@
-import { DataType } from "./types/enum";
+import { DataType } from './types/enum';
 
 export class ValueConverter {
   public static GetValue(arraySegment: Buffer, dataType: DataType): any {
     switch (dataType) {
       case DataType.CodecId:
-        return arraySegment.readUint8(0).toString()
+        return arraySegment.readUint8(0).toString();
       case DataType.AvlDataCount:
-        return arraySegment
+        return arraySegment;
       case DataType.Timestamp:
-        const unix = arraySegment.readBigUInt64BE(0)
-        return new Date(Number(unix))
+        const unix = arraySegment.readBigUInt64BE(0);
+        return new Date(Number(unix));
       case DataType.Priority:
-        return arraySegment.readInt8(0)
+        return arraySegment.readInt8(0);
       case DataType.Latitude:
       case DataType.Longitude:
-        return (arraySegment.readInt32BE(0) / 10000000).toString()
+        return (arraySegment.readInt32BE(0) / 10000000).toString();
       case DataType.Altitude:
       case DataType.Speed:
       case DataType.Angle:
-        return arraySegment.readInt16BE(0)
+        return arraySegment.readInt16BE(0);
       case DataType.Satellites:
-        return arraySegment.readInt8(0)
+        return arraySegment.readInt8(0);
       case DataType.EventIoId:
       case DataType.IoCount:
       case DataType.IoCount1B:
@@ -83,7 +83,7 @@ export class ValueConverter {
       case DataType.ImeiLength:
       case DataType.Imei:
       default:
-        return arraySegment
+        return arraySegment;
     }
   }
 }
