@@ -6,8 +6,8 @@ import { BackedConfig } from '../configs/server';
 import StatusController from './StatusController';
 import DataParser from '../parser/DataParser';
 import crc from 'crc';
-import { Point } from '@influxdata/influxdb-client';
 import { type ISocket } from '../parser/types/type';
+import { NatsConnection, StringCodec } from 'nats';
 
 export default class DataController {
   private readonly influx: InfluxDriver;
@@ -15,8 +15,8 @@ export default class DataController {
   constructor(
     public data: Buffer,
     public client: net.Socket,
-    public redis: any,
     public sockets: ISocket[],
+    public nats: NatsConnection,
   ) {
     const influx = new InfluxDriver(InfluxConfig);
     this.influx = influx;
@@ -31,7 +31,7 @@ export default class DataController {
     }
 
     // Get IMEI
-    const imei = await this.getImei();
+    const imei = this.getImei();
     if (imei === '') {
       this.logError('IMEI not found on redis');
       return;
@@ -52,26 +52,33 @@ export default class DataController {
     const result = parser.decodeTcpData(this.data);
 
     // Store to InfluxDB
-    const points: Point[] = [];
+    const points: Array<any> = [];
     result.packet.forEach((data) => {
-      const point = new Point('geolocation')
-        .tag('imei', imei)
-        .stringField('latitude', data.latitude)
-        .stringField('longitude', data.longitude)
-        .stringField('sat_quantity', data.satellites.toString())
-        .stringField('course', data.angle.toString())
-        .stringField('altitude', data.altitude.toString())
-        .stringField('stored_time', new Date().toISOString())
-        .stringField('event_io', data.eventId.toString())
-        .stringField('io_count', data.ioCount.toString())
-        .timestamp(data.timestamp);
-
-      data.io.forEach((io) => {
-        point.stringField(io.id.toString(), io.value);
+      const point = {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        sat_quantity: data.satellites.toString(),
+        course: data.angle.toString(),
+        altitude: data.altitude.toString(),
+        stored_time: new Date().toISOString(),
+        event_io: data.eventId.toString(),
+        io_count: data.ioCount.toString(),
+        timestamp: data.timestamp,
+      };
+      data.io.forEach(({ id, value }) => {
+        Object.assign(point, { [id.toString()]: value });
       });
       points.push(point);
     });
-    await this.influx.writePoints(points);
+
+    // Should be send to NATS
+    for (const iterator of points) {
+      const sc = StringCodec();
+      this.nats.publish(
+        `device.${imei}.geolocation`,
+        sc.encode(JSON.stringify(iterator)),
+      );
+    }
 
     // Send response to client
     const prefix = Buffer.from([0x00, 0x00, 0x00]);
@@ -82,14 +89,10 @@ export default class DataController {
     );
   }
 
-  async getImei() {
-    const imei = await this.redis.get(
-      `imei/${this.client.remoteAddress}/${this.client.remotePort}`,
+  getImei() {
+    return (
+      this.sockets.find(({ client }) => client === this.client)?.imei || ''
     );
-    if (typeof imei === 'string') {
-      return imei;
-    }
-    return '';
   }
 
   async imeiCheck(): Promise<void> {
@@ -102,18 +105,13 @@ export default class DataController {
 
     // Check if imei available on FMS-BE
     const responseCheckImei = await axios.get(
-      `${BackedConfig.url}/api/v1/devices/${imei}`,
+      `${BackedConfig.url}/service-connector/devices/${imei}`,
     );
     if (responseCheckImei.status !== 200) return;
 
     // Write accepted tcp stream to device Teltonika and store imei to redis
     this.write(this.client, Buffer.from([0x01]), async () => {
-      await this.redis.set(
-        `imei/${this.client.remoteAddress}/${this.client.remotePort}`,
-        imei,
-      );
-
-      const statusController = new StatusController(this.client, this.redis);
+      const statusController = new StatusController(this.client, this.sockets);
       await statusController.store('ONLINE');
 
       this.logError(`${imei} accepted to connect server`);

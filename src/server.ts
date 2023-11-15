@@ -1,16 +1,15 @@
-import { createClient } from 'redis';
 import * as net from 'net';
 import { TCPClientWorker } from './workers/TCPWorker';
-import { RedisConfig } from './configs/redis';
 import StatusController from './controllers/StatusController';
 import { ISocket } from './parser/types/type';
+import { connect } from 'nats';
+import { NatsConfig } from './configs/nats';
 
 export class TCPServerFactory {
   public sockets: Array<ISocket> = [];
   public socketForwaders: Array<net.Socket> = [];
   public server: net.Server;
   public serverForwarder: net.Server;
-  public redis: any;
 
   constructor(host: string, port: number) {
     const server = net.createServer();
@@ -36,17 +35,21 @@ export class TCPServerFactory {
 
     this.server = server;
     this.serverForwarder = serverForwarder;
-    this.redis = createClient({
-      url: `redis://${RedisConfig.username}:${RedisConfig.password}@${RedisConfig.host}:6379`,
-    });
   }
 
   async listen() {
-    await this.redis.connect();
+    const nc = await connect({
+      servers: NatsConfig.server,
+      user: NatsConfig.username,
+      pass: NatsConfig.password,
+    });
+    console.log(
+      new Date().toISOString() + ` NATS Connected to ${nc.getServer()}`,
+    );
 
     const clientForwarder = new net.Socket();
     clientForwarder.connect(9200, '0.0.0.0', function () {
-      console.log('Client forwarder active');
+      console.log(new Date().toISOString() + ' Client forwarder active');
     });
 
     this.server.on('connection', (sock) => {
@@ -65,12 +68,7 @@ export class TCPServerFactory {
       this.sockets.push({ client: sock });
 
       sock.on('data', (data: Buffer) => {
-        const worker = new TCPClientWorker(
-          data,
-          sock,
-          this.redis,
-          this.sockets,
-        );
+        const worker = new TCPClientWorker(data, sock, this.sockets, nc);
         worker.handleMessage();
 
         // Forward data for logging
@@ -102,7 +100,7 @@ export class TCPServerFactory {
 
       console.log(
         new Date().toISOString() +
-          ' CLIENT LOGGER CONNECTED ' +
+          ' Client Logger Connected ' +
           sock.remoteAddress +
           ':' +
           sock.remotePort,
@@ -134,7 +132,7 @@ export class TCPServerFactory {
       sock.on('close', async () => {
         console.log(
           new Date().toISOString() +
-            ' CLIENT LOGGER CLOSE ' +
+            ' Client Logger Close ' +
             sock.remoteAddress +
             ':' +
             sock.remotePort,
@@ -154,7 +152,7 @@ export class TCPServerFactory {
   }
 
   async errorConnection(sock: net.Socket, message: string) {
-    let index = this.sockets.findIndex(({ client }) => {
+    const index = this.sockets.findIndex(({ client }) => {
       return (
         client.remoteAddress === sock.remoteAddress &&
         client.remotePort === sock.remotePort
@@ -169,7 +167,7 @@ export class TCPServerFactory {
         sock.remotePort,
     );
 
-    const statusController = new StatusController(sock, this.redis);
+    const statusController = new StatusController(sock, this.sockets);
     statusController.store('OFFLINE');
   }
 }

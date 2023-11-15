@@ -2,20 +2,21 @@ import * as net from 'net';
 import { InfluxDriver } from '../providers/influx';
 import { InfluxConfig } from '../configs/influx';
 import { Point } from '@influxdata/influxdb-client';
+import { ISocket } from '../parser/types/type';
 
 export default class StatusController {
   private influx: InfluxDriver;
 
   constructor(
     public client: net.Socket,
-    public redis: any,
+    public sockets: ISocket[],
   ) {
     const influx = new InfluxDriver(InfluxConfig);
     this.influx = influx;
   }
 
   async store(status: string) {
-    const imei = await this.getImei();
+    const imei = this.getImei();
     if (imei === '') return this.logError('IMEI not found on redis');
 
     const statusTcpPoint = new Point('TCPStatus')
@@ -25,22 +26,12 @@ export default class StatusController {
       .stringField('port', this.client.remotePort);
 
     await this.influx.writePoint(statusTcpPoint);
-
-    if (status === 'OFFLINE') {
-      await this.redis.del(
-        `imei/${this.client.remoteAddress}/${this.client.remotePort}`,
-      );
-    }
   }
 
-  async getImei() {
-    const imei = await this.redis.get(
-      `imei/${this.client.remoteAddress}/${this.client.remotePort}`,
+  getImei() {
+    return (
+      this.sockets.find(({ client }) => client === this.client)?.imei || ''
     );
-    if (typeof imei === 'string') {
-      return imei;
-    }
-    return '';
   }
 
   logError(message: string) {
