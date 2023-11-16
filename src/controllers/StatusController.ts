@@ -9,7 +9,7 @@ export default class StatusController {
     public nats: NatsConnection,
   ) {}
 
-  async store(status: string) {
+  store(status: string) {
     const imei = this.getImei();
     if (imei === '') return this.logError('IMEI not found on buffer');
 

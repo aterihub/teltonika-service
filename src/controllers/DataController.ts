@@ -105,13 +105,6 @@ export default class DataController {
 
       // Write accepted tcp stream to device Teltonika and store imei to buffer
       this.write(this.client, Buffer.from([0x01]), async () => {
-        const statusController = new StatusController(
-          this.client,
-          this.sockets,
-          this.nats,
-        );
-        await statusController.store('ONLINE');
-
         this.logError(`${imei} accepted to connect server`);
 
         // Set imei to ISocket object
@@ -119,6 +112,14 @@ export default class DataController {
           ({ client }) => client === this.client,
         );
         socket!.imei = imei;
+
+        // Send status device via nats
+        const statusController = new StatusController(
+          this.client,
+          this.sockets,
+          this.nats,
+        );
+        statusController.store('ONLINE');
       });
     } catch (error: any) {
       this.logError(error.message);
