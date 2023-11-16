@@ -2,7 +2,7 @@ import * as net from 'net';
 import { TCPClientWorker } from './workers/TCPWorker';
 import StatusController from './controllers/StatusController';
 import { ISocket } from './parser/types/type';
-import { connect } from 'nats';
+import { NatsConnection, connect } from 'nats';
 import { NatsConfig } from './configs/nats';
 
 export class TCPServerFactory {
@@ -54,7 +54,7 @@ export class TCPServerFactory {
 
     this.server.on('connection', (sock) => {
       // Set keep alive TCP client
-      sock.setKeepAlive(true, 1800000);
+      sock.setKeepAlive(true, 6000);
 
       // If there's new connection came up will print logs
       console.log(
@@ -79,7 +79,7 @@ export class TCPServerFactory {
 
       // Handle connection if device close connection
       sock.on('close', async () => {
-        this.errorConnection(sock, 'CLOSED');
+        this.errorConnection(sock, 'CLOSED', nc);
       });
 
       // Create error log when device connection error
@@ -151,7 +151,11 @@ export class TCPServerFactory {
     });
   }
 
-  async errorConnection(sock: net.Socket, message: string) {
+  async errorConnection(
+    sock: net.Socket,
+    message: string,
+    nats: NatsConnection,
+  ) {
     const index = this.sockets.findIndex(({ client }) => {
       return (
         client.remoteAddress === sock.remoteAddress &&
@@ -167,7 +171,7 @@ export class TCPServerFactory {
         sock.remotePort,
     );
 
-    const statusController = new StatusController(sock, this.sockets);
+    const statusController = new StatusController(sock, this.sockets, nats);
     statusController.store('OFFLINE');
   }
 }

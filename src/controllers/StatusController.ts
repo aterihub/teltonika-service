@@ -1,31 +1,29 @@
 import * as net from 'net';
-import { InfluxDriver } from '../providers/influx';
-import { InfluxConfig } from '../configs/influx';
-import { Point } from '@influxdata/influxdb-client';
 import { ISocket } from '../parser/types/type';
+import { NatsConnection, StringCodec } from 'nats';
 
 export default class StatusController {
-  private influx: InfluxDriver;
-
   constructor(
     public client: net.Socket,
     public sockets: ISocket[],
-  ) {
-    const influx = new InfluxDriver(InfluxConfig);
-    this.influx = influx;
-  }
+    public nats: NatsConnection,
+  ) {}
 
   async store(status: string) {
     const imei = this.getImei();
-    if (imei === '') return this.logError('IMEI not found on redis');
+    if (imei === '') return this.logError('IMEI not found on buffer');
 
-    const statusTcpPoint = new Point('TCPStatus')
-      .tag('imei', imei)
-      .stringField('status', status)
-      .stringField('IPAddress', this.client.remoteAddress)
-      .stringField('port', this.client.remotePort);
+    const dataStatus = {
+      status,
+      ipaddress: this.client.remoteAddress,
+      port: this.client.remotePort,
+    };
 
-    await this.influx.writePoint(statusTcpPoint);
+    const sc = StringCodec();
+    this.nats.publish(
+      `device.${imei}.geolocation`,
+      sc.encode(JSON.stringify(dataStatus)),
+    );
   }
 
   getImei() {

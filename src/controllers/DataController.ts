@@ -1,5 +1,3 @@
-import { InfluxConfig } from '../configs/influx';
-import { InfluxDriver } from '../providers/influx';
 import type * as net from 'net';
 import axios from 'axios';
 import { BackedConfig } from '../configs/server';
@@ -10,17 +8,12 @@ import { type ISocket } from '../parser/types/type';
 import { NatsConnection, StringCodec } from 'nats';
 
 export default class DataController {
-  private readonly influx: InfluxDriver;
-
   constructor(
     public data: Buffer,
     public client: net.Socket,
     public sockets: ISocket[],
     public nats: NatsConnection,
-  ) {
-    const influx = new InfluxDriver(InfluxConfig);
-    this.influx = influx;
-  }
+  ) {}
 
   async store() {
     // Check Preamble
@@ -33,7 +26,7 @@ export default class DataController {
     // Get IMEI
     const imei = this.getImei();
     if (imei === '') {
-      this.logError('IMEI not found on redis');
+      this.logError('IMEI not found on buffer');
       return;
     }
 
@@ -95,7 +88,7 @@ export default class DataController {
     );
   }
 
-  async imeiCheck(): Promise<void> {
+  async imeiCheck() {
     // Check imei length
     const imeiLength = this.data.subarray(0, 2).readInt16BE(0);
     if (imeiLength !== 15) return;
@@ -104,22 +97,32 @@ export default class DataController {
     const imei = this.data.subarray(2, this.data.length).toString();
 
     // Check if imei available on FMS-BE
-    const responseCheckImei = await axios.get(
-      `${BackedConfig.url}/service-connector/devices/${imei}`,
-    );
-    if (responseCheckImei.status !== 200) return;
+    try {
+      const responseCheckImei = await axios.get(
+        `${BackedConfig.url}/service-connector/devices/${imei}`,
+      );
+      if (responseCheckImei.status !== 200) return;
 
-    // Write accepted tcp stream to device Teltonika and store imei to redis
-    this.write(this.client, Buffer.from([0x01]), async () => {
-      const statusController = new StatusController(this.client, this.sockets);
-      await statusController.store('ONLINE');
+      // Write accepted tcp stream to device Teltonika and store imei to buffer
+      this.write(this.client, Buffer.from([0x01]), async () => {
+        const statusController = new StatusController(
+          this.client,
+          this.sockets,
+          this.nats,
+        );
+        await statusController.store('ONLINE');
 
-      this.logError(`${imei} accepted to connect server`);
+        this.logError(`${imei} accepted to connect server`);
 
-      // Set imei to ISocket object
-      const socket = this.sockets.find(({ client }) => client === this.client);
-      socket!.imei = imei;
-    });
+        // Set imei to ISocket object
+        const socket = this.sockets.find(
+          ({ client }) => client === this.client,
+        );
+        socket!.imei = imei;
+      });
+    } catch (error: any) {
+      this.logError(error.message);
+    }
   }
 
   write(client: net.Socket, data: Buffer, cb?: any) {
