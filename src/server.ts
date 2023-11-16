@@ -54,7 +54,7 @@ export class TCPServerFactory {
 
     this.server.on('connection', (sock) => {
       // Set keep alive TCP client
-      sock.setKeepAlive(true, 1800000);
+      sock.setKeepAlive(true, 30000);
 
       // If there's new connection came up will print logs
       console.log(
