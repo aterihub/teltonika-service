@@ -17,6 +17,7 @@ export default class StatusController {
       status,
       ipaddress: this.client.remoteAddress,
       port: this.client.remotePort,
+      timestamp: new Date(),
     };
 
     const sc = StringCodec();

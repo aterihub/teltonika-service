@@ -54,7 +54,7 @@ export class TCPServerFactory {
 
     this.server.on('connection', (sock) => {
       // Set keep alive TCP client
-      sock.setKeepAlive(true, 6000);
+      sock.setKeepAlive(true, 1800000);
 
       // If there's new connection came up will print logs
       console.log(
@@ -156,6 +156,9 @@ export class TCPServerFactory {
     message: string,
     nats: NatsConnection,
   ) {
+    const statusController = new StatusController(sock, this.sockets, nats);
+    statusController.store('OFFLINE');
+
     const index = this.sockets.findIndex(({ client }) => {
       return (
         client.remoteAddress === sock.remoteAddress &&
@@ -170,8 +173,5 @@ export class TCPServerFactory {
         ':' +
         sock.remotePort,
     );
-
-    const statusController = new StatusController(sock, this.sockets, nats);
-    statusController.store('OFFLINE');
   }
 }
