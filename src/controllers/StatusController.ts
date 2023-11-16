@@ -21,7 +21,7 @@ export default class StatusController {
 
     const sc = StringCodec();
     this.nats.publish(
-      `device.${imei}.geolocation`,
+      `device.connection.${imei}`,
       sc.encode(JSON.stringify(dataStatus)),
     );
   }
