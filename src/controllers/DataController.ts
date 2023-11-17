@@ -67,8 +67,9 @@ export default class DataController {
     // Should be send to NATS
     for (const iterator of points) {
       const sc = StringCodec();
+      const measurement = 'geolocation';
       this.nats.publish(
-        `device.geolocation.${imei}`,
+        `device.${imei}.${measurement}`,
         sc.encode(JSON.stringify(iterator)),
       );
     }

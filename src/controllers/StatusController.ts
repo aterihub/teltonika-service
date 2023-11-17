@@ -21,8 +21,9 @@ export default class StatusController {
     };
 
     const sc = StringCodec();
+    const measurement = 'connection';
     this.nats.publish(
-      `device.connection.${imei}`,
+      `device.${imei}.${measurement}`,
       sc.encode(JSON.stringify(dataStatus)),
     );
   }
