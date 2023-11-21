@@ -134,7 +134,7 @@ export default class DataController {
 
   write(client: net.Socket, data: Buffer, cb?: any) {
     if (!client.write(data, 'hex')) {
-      client.once('drain', cb);
+      // client.once('drain', cb);
       this.logError('Failed to write response');
     } else {
       process.nextTick(cb);
@@ -143,7 +143,14 @@ export default class DataController {
 
   logError(...message: string[]) {
     console.log(
-      new Date().toISOString() + ' ' + this.getImei() + ':' + ' ' + message,
+      new Date().toISOString() +
+        this.client.remoteAddress +
+        ' : ' +
+        this.client.remotePort +
+        ' ' +
+        this.getImei() +
+        ' ' +
+        message,
     );
   }
 }
