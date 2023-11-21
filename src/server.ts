@@ -73,7 +73,11 @@ export class TCPServerFactory {
 
         // Forward data for logging
         clientForwarder.write(
-          sock.remoteAddress! + ' - ' + data.toString('hex'),
+          sock.remoteAddress +
+            ':' +
+            sock.remotePort +
+            ' - ' +
+            data.toString('hex'),
         );
       });
 
