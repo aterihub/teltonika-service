@@ -65,21 +65,17 @@ export default class DataController {
 
       // Send response to client
       const prefix = Buffer.from([0x00, 0x00, 0x00]);
-      this.write(
-        this.client,
-        Buffer.concat([prefix, result.countData]),
-        () => {},
-      );
-
-      // Should be send to NATS
-      for (const iterator of points) {
-        const sc = StringCodec();
-        const measurement = 'geolocation';
-        this.nats.publish(
-          `device.${imei}.${measurement}`,
-          sc.encode(JSON.stringify(iterator)),
-        );
-      }
+      this.write(this.client, Buffer.concat([prefix, result.countData]), () => {
+        // Should be send to NATS
+        for (const iterator of points) {
+          const sc = StringCodec();
+          const measurement = 'geolocation';
+          this.nats.publish(
+            `device.${imei}.${measurement}`,
+            sc.encode(JSON.stringify(iterator)),
+          );
+        }
+      });
     } catch (error: any) {
       if (error.code === 'ERR_BUFFER_OUT_OF_BOUNDS') {
         this.logError(
@@ -139,6 +135,7 @@ export default class DataController {
   write(client: net.Socket, data: Buffer, cb?: any) {
     if (!client.write(data, 'hex')) {
       client.once('drain', cb);
+      this.logError('Failed to write response');
     } else {
       process.nextTick(cb);
     }
@@ -146,13 +143,7 @@ export default class DataController {
 
   logError(...message: string[]) {
     console.log(
-      new Date().toISOString() +
-        ' ' +
-        this.client.remoteAddress! +
-        ':' +
-        this.client.remotePort! +
-        ' ' +
-        message,
+      new Date().toISOString() + ' ' + this.getImei() + ':' + ' ' + message,
     );
   }
 }
