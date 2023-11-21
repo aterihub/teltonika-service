@@ -42,45 +42,53 @@ export default class DataController {
 
     // Parse
     const parser = new DataParser();
-    const result = parser.decodeTcpData(this.data);
-
-    // Store to InfluxDB
     const points: Array<any> = [];
-    result.packet.forEach((data) => {
-      const point = {
-        latitude: data.latitude,
-        longitude: data.longitude,
-        sat_quantity: data.satellites.toString(),
-        course: data.angle.toString(),
-        altitude: data.altitude.toString(),
-        stored_time: new Date().toISOString(),
-        event_io: data.eventId.toString(),
-        io_count: data.ioCount.toString(),
-        timestamp: data.timestamp,
-      };
-      data.io.forEach(({ id, value }) => {
-        Object.assign(point, { [id.toString()]: value });
+    try {
+      const result = parser.decodeTcpData(this.data);
+      result.packet.forEach((data) => {
+        const point = {
+          latitude: data.latitude,
+          longitude: data.longitude,
+          sat_quantity: data.satellites.toString(),
+          course: data.angle.toString(),
+          altitude: data.altitude.toString(),
+          stored_time: new Date().toISOString(),
+          event_io: data.eventId.toString(),
+          io_count: data.ioCount.toString(),
+          timestamp: data.timestamp,
+        };
+        data.io.forEach(({ id, value }) => {
+          Object.assign(point, { [id.toString()]: value });
+        });
+        points.push(point);
       });
-      points.push(point);
-    });
+      // Should be send to NATS
+      for (const iterator of points) {
+        const sc = StringCodec();
+        const measurement = 'geolocation';
+        this.nats.publish(
+          `device.${imei}.${measurement}`,
+          sc.encode(JSON.stringify(iterator)),
+        );
+      }
 
-    // Should be send to NATS
-    for (const iterator of points) {
-      const sc = StringCodec();
-      const measurement = 'geolocation';
-      this.nats.publish(
-        `device.${imei}.${measurement}`,
-        sc.encode(JSON.stringify(iterator)),
+      // Send response to client
+      const prefix = Buffer.from([0x00, 0x00, 0x00]);
+      this.write(
+        this.client,
+        Buffer.concat([prefix, result.countData]),
+        () => {},
       );
+    } catch (error: any) {
+      if (error.code === 'ERR_BUFFER_OUT_OF_BOUNDS') {
+        this.logError(
+          'Caught ERR_BUFFER_OUT_OF_BOUNDS error:',
+          this.data.toString('hex'),
+        );
+      } else {
+        this.logError('An unexpected error occurred:', error.message);
+      }
     }
-
-    // Send response to client
-    const prefix = Buffer.from([0x00, 0x00, 0x00]);
-    this.write(
-      this.client,
-      Buffer.concat([prefix, result.countData]),
-      () => {},
-    );
   }
 
   getImei() {
@@ -135,7 +143,7 @@ export default class DataController {
     }
   }
 
-  logError(message: string) {
+  logError(...message: string[]) {
     console.log(
       new Date().toISOString() +
         ' ' +
