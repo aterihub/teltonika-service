@@ -62,6 +62,15 @@ export default class DataController {
         });
         points.push(point);
       });
+
+      // Send response to client
+      const prefix = Buffer.from([0x00, 0x00, 0x00]);
+      this.write(
+        this.client,
+        Buffer.concat([prefix, result.countData]),
+        () => {},
+      );
+
       // Should be send to NATS
       for (const iterator of points) {
         const sc = StringCodec();
@@ -71,14 +80,6 @@ export default class DataController {
           sc.encode(JSON.stringify(iterator)),
         );
       }
-
-      // Send response to client
-      const prefix = Buffer.from([0x00, 0x00, 0x00]);
-      this.write(
-        this.client,
-        Buffer.concat([prefix, result.countData]),
-        () => {},
-      );
     } catch (error: any) {
       if (error.code === 'ERR_BUFFER_OUT_OF_BOUNDS') {
         this.logError(
