@@ -11,6 +11,7 @@ export default class DataParser {
 
     parser.readData(4, DataType.Preamble);
     parser.readData(4, DataType.AvlDataArrayLength);
+    // eslint-disable-next-line prefer-const
     result = this.decodeAvlData(parser);
     parser.readData(4, DataType.Crc);
 
