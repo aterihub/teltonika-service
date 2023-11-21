@@ -144,8 +144,9 @@ export default class DataController {
   logError(...message: string[]) {
     console.log(
       new Date().toISOString() +
+        ' ' +
         this.client.remoteAddress +
-        ' : ' +
+        ':' +
         this.client.remotePort +
         ' ' +
         this.getImei() +
