@@ -1,42 +1,46 @@
-import * as net from 'net'
-import { InfluxDriver } from "../providers/influx"
-import { InfluxConfig } from "../configs/influx"
-import { Point } from '@influxdata/influxdb-client'
+import * as net from 'net';
+import { ISocket } from '../parser/types/type';
+import { NatsConnection, StringCodec } from 'nats';
 
 export default class StatusController {
-  private influx: InfluxDriver
+  constructor(
+    public client: net.Socket,
+    public sockets: ISocket[],
+    public nats: NatsConnection,
+  ) {}
 
-  constructor(public client: net.Socket, public redis: any) {
-    const influx = new InfluxDriver(InfluxConfig)
-    this.influx = influx
+  store(status: string) {
+    const imei = this.getImei();
+    if (imei === '') return this.logError('IMEI not found on buffer');
+
+    const dataStatus = {
+      status,
+      ipaddress: this.client.remoteAddress,
+      port: this.client.remotePort,
+      timestamp: new Date(),
+    };
+
+    const sc = StringCodec();
+    const measurement = 'connection';
+    this.nats.publish(
+      `device.${imei}.${measurement}`,
+      sc.encode(JSON.stringify(dataStatus)),
+    );
   }
 
-  async store(status: string) {
-    const imei = await this.getImei()
-    if (imei === '') return this.logError('IMEI not found on redis')
-
-    const statusTcpPoint = new Point('TCPStatus')
-      .tag('imei', imei)
-      .stringField('status', status)
-      .stringField('IPAddress', this.client.remoteAddress)
-      .stringField('port', this.client.remotePort)
-
-    await this.influx.writePoint(statusTcpPoint)
-
-    if (status === 'OFFLINE') {
-      await this.redis.del(`imei/${this.client.remoteAddress}/${this.client.remotePort}`)
-    }
-  }
-
-  async getImei() {
-    const imei = await this.redis.get(`imei/${this.client.remoteAddress}/${this.client.remotePort}`)
-    if (typeof (imei) === 'string') {
-      return imei
-    }
-    return ''
+  getImei() {
+    return (
+      this.sockets.find(({ client }) => client === this.client)?.imei || ''
+    );
   }
 
   logError(message: string) {
-    console.log(new Date().toISOString() + ' ' + this.client.remoteAddress! + ' ' + message)
+    console.log(
+      new Date().toISOString() +
+        ' ' +
+        this.client.remoteAddress! +
+        ' ' +
+        message,
+    );
   }
 }

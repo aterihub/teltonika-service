@@ -68,6 +68,5 @@ export enum DataType {
   PacketType,
   AvlPacketId,
   ImeiLength,
-  Imei
+  Imei,
 }
-
