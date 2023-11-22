@@ -2,17 +2,24 @@
   "devDependencies": {
     "@types/node": "^18.15.3",
     "@types/struct": "^0.0.4",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.42.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "3.0.3",
     "typescript": "^4.9.5"
   },
   "scripts": {
     "build": "npx tsc",
-    "start": "ts-node main.ts"
+    "start": "npx ts-node main.ts"
   },
   "dependencies": {
     "@influxdata/influxdb-client": "^1.33.2",
     "axios": "^1.3.4",
     "crc": "^4.3.2",
     "dotenv": "^16.0.3",
+    "nats": "^2.18.0",
     "redis": "^4.6.5",
     "struct": "^0.0.12",
     "teltonika-parser": "^0.0.15"
