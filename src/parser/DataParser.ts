@@ -3,6 +3,7 @@ import PacketDecoder from './PacketDecoder';
 import { DataType } from './types/enum';
 import crc from 'crc';
 import { type AVLData, type IPacketResult } from './types/type';
+import { propertyIOMaping } from './types/iomap';
 
 export default class DataParser {
   public decodeTcpData(bytes: Buffer) {
@@ -33,6 +34,11 @@ export default class DataParser {
       packetData.push(packet.result);
     }
     parser.readData(1, DataType.AvlDataCount);
+    for (const packet of packetData) {
+      for (const io of packet.io) {
+        io.id = propertyIOMaping[io.id] || io.id;
+      }
+    }
     return { packet: packetData, countData };
   }
 

@@ -15,8 +15,8 @@ export type AVLData = {
 };
 
 export type IOElement = {
-  id: number;
-  value: string;
+  id: number | string;
+  value: string | number;
 };
 
 export interface IPacketResult {

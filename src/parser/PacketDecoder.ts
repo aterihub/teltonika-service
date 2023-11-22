@@ -38,28 +38,40 @@ export default class PacketDecoder {
     for (let j = 0; j < ioCount1BData.readInt16BE(0); j++) {
       const id = this._parser.readData(2, DataType.ExtendedIoId1B);
       const value = this._parser.readData(1, DataType.IoValue1B);
-      ioElement.push({ id: id.readInt16BE(0), value: value.toString('hex') });
+      ioElement.push({
+        id: id.readInt16BE(0),
+        value: parseInt(value.toString('hex'), 16),
+      });
     }
 
     const ioCount2BData = this._parser.readData(2, DataType.ExtendedIoCount2B);
     for (let j = 0; j < ioCount2BData.readInt16BE(0); j++) {
       const id = this._parser.readData(2, DataType.ExtendedIoId2B);
       const value = this._parser.readData(2, DataType.IoValue2B);
-      ioElement.push({ id: id.readInt16BE(0), value: value.toString('hex') });
+      ioElement.push({
+        id: id.readInt16BE(0),
+        value: parseInt(value.toString('hex'), 16),
+      });
     }
 
     const ioCount4BData = this._parser.readData(2, DataType.ExtendedIoCount4B);
     for (let j = 0; j < ioCount4BData.readInt16BE(0); j++) {
       const id = this._parser.readData(2, DataType.ExtendedIoId4B);
       const value = this._parser.readData(4, DataType.IoValue4B);
-      ioElement.push({ id: id.readInt16BE(0), value: value.toString('hex') });
+      ioElement.push({
+        id: id.readInt16BE(0),
+        value: parseInt(value.toString('hex'), 16),
+      });
     }
 
     const ioCount8BData = this._parser.readData(2, DataType.ExtendedIoCount8B);
     for (let j = 0; j < ioCount8BData.readInt16BE(0); j++) {
       const id = this._parser.readData(2, DataType.ExtendedIoId8B);
       const value = this._parser.readData(8, DataType.IoValue8B);
-      ioElement.push({ id: id.readInt16BE(0), value: value.toString('hex') });
+      ioElement.push({
+        id: id.readInt16BE(0),
+        value: parseInt(value.toString('hex'), 16),
+      });
     }
 
     const ioCountXBData = this._parser.readData(2, DataType.ExtendedIoCountXB);
