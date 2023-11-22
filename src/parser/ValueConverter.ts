@@ -14,7 +14,7 @@ export class ValueConverter {
         return arraySegment.readInt8(0);
       case DataType.Latitude:
       case DataType.Longitude:
-        return (arraySegment.readInt32BE(0) / 10000000).toString();
+        return arraySegment.readInt32BE(0) / 10000000;
       case DataType.Altitude:
       case DataType.Speed:
       case DataType.Angle:
