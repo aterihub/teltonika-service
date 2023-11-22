@@ -49,12 +49,12 @@ export default class DataController {
         const point = {
           latitude: data.latitude,
           longitude: data.longitude,
-          sat_quantity: data.satellites.toString(),
-          course: data.angle.toString(),
-          altitude: data.altitude.toString(),
+          sat_quantity: data.satellites,
+          course: data.angle,
+          altitude: data.altitude,
           stored_time: new Date().toISOString(),
           event_io: data.eventId.toString(),
-          io_count: data.ioCount.toString(),
+          io_count: data.ioCount,
           timestamp: data.timestamp,
         };
         data.io.forEach(({ id, value }) => {
