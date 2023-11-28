@@ -894,7 +894,7 @@ export const propertyIOMaping: Record<string, string> = {
   '608': 'distanceRight',
   '609': 'timeTillCollision',
   '610': 'sda',
-  '611': 'fvsra',
+  '611': 'fvsa',
   '612': 'fpw',
   '613': 'fcw',
   '614': 'pcw',
