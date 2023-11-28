@@ -899,7 +899,7 @@ export const propertyIOMaping: Record<string, string> = {
   '613': 'fcw',
   '614': 'pcw',
   '615': 'record',
-  '616': 'errorCode',
+  '616': 'adasErrorCode',
   '617': 'aheadDistance',
   '618': 'aheadSpeed',
   '619': 'slrState',
@@ -919,7 +919,7 @@ export const propertyIOMaping: Record<string, string> = {
   '11709': 'recordingStatus',
   '11710': 'gpsStatus',
   '11711': 'dsmSpeed',
-  '11712': 'errorCode',
+  '11712': 'dsmErrorCode',
   '11713': 'seatbelt',
   '11714': 'dsmState',
 };
