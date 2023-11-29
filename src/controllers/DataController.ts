@@ -6,6 +6,7 @@ import DataParser from '../parser/DataParser';
 import crc from 'crc';
 import { type ISocket } from '../parser/types/type';
 import { NatsConnection, StringCodec } from 'nats';
+import { propertyIOMaping } from '../parser/types/iomap';
 
 export default class DataController {
   constructor(
@@ -53,7 +54,9 @@ export default class DataController {
           course: data.angle,
           altitude: data.altitude,
           storedTime: new Date().toISOString(),
-          eventIo: data.eventId.toString(),
+          eventIo:
+            propertyIOMaping[data.eventId.toString()] ||
+            data.eventId.toString(),
           ioCount: data.ioCount,
           timestamp: data.timestamp,
         };
