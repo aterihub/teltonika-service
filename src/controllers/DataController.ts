@@ -137,7 +137,7 @@ export default class DataController {
 
   write(client: net.Socket, data: Buffer, cb?: any) {
     if (!client.write(data, 'hex')) {
-      // client.once('drain', cb);
+      client.once('drain', cb);
       this.logError('Failed to write response');
     } else {
       process.nextTick(cb);
