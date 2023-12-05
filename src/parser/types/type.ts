@@ -3,8 +3,8 @@ import * as net from 'net';
 export type AVLData = {
   timestamp: Date;
   priority: number;
-  longitude: string;
-  latitude: string;
+  longitude: number;
+  latitude: number;
   altitude: number;
   angle: number;
   satellites: number;
