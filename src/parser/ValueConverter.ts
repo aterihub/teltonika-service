@@ -9,7 +9,16 @@ export class ValueConverter {
         return arraySegment;
       case DataType.Timestamp:
         const unix = arraySegment.readBigUInt64BE(0);
-        return new Date(Number(unix));
+        const dateUnix = new Date(Number(unix));
+        if (typeof dateUnix === 'number') {
+          console.log(
+            new Date().toISOString(),
+            'Error timestamp',
+            arraySegment,
+            unix,
+          );
+        }
+        return dateUnix;
       case DataType.Priority:
         return arraySegment.readInt8(0);
       case DataType.Latitude:

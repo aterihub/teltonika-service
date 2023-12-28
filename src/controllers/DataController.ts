@@ -63,13 +63,6 @@ export default class DataController {
         data.io.forEach(({ id, value }) => {
           Object.assign(point, { [id.toString()]: value });
         });
-        if (typeof point.timestamp === 'number') {
-          console.log(
-            new Date().toISOString(),
-            'Error timestamp',
-            this.data.toString('hex'),
-          );
-        }
         points.push(point);
       });
 
