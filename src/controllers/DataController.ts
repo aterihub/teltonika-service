@@ -46,6 +46,7 @@ export default class DataController {
     const points: Array<any> = [];
     try {
       const result = parser.decodeTcpData(this.data);
+      console.log(result);
       result.packet.forEach((data) => {
         const point = {
           latitude: data.latitude,
