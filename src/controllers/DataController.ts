@@ -64,7 +64,6 @@ export default class DataController {
           Object.assign(point, { [id.toString()]: value });
         });
         points.push(point);
-        console.log(point);
       });
 
       // Send response to client
