@@ -65,7 +65,7 @@ export default class DataController {
         console.log('prepoint', point.timestamp);
         data.io.forEach(({ id, value }) => {
           Object.assign(point, { [id.toString()]: value });
-          console.log(point.timestamp);
+          console.log(point.timestamp, { [id.toString()]: value });
         });
         console.log('postpoint', point.timestamp);
         points.push(point);
