@@ -46,7 +46,7 @@ export default class DataController {
     const points: Array<any> = [];
     try {
       const result = parser.decodeTcpData(this.data);
-      console.log(result);
+      result.packet.forEach((x) => console.log(x.timestamp));
       result.packet.forEach((data) => {
         const point = {
           latitude: data.latitude,
@@ -61,9 +61,11 @@ export default class DataController {
           ioCount: data.ioCount,
           timestamp: data.timestamp,
         };
+        console.log(data.timestamp);
         data.io.forEach(({ id, value }) => {
           Object.assign(point, { [id.toString()]: value });
         });
+        console.log(point.timestamp);
         points.push(point);
       });
 
