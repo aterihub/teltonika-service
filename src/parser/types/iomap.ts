@@ -790,7 +790,7 @@ export const propertyIOMaping: Record<string, string> = {
   '191': 'vehicleSpeed',
   // '192': 'odometer',
   '193': 'tripDistance',
-  '194': 'timestamp',
+  '194': 'ioTimestamp',
   '231': 'vehicleRegistrationNumberPart1',
   '232': 'vehicleRegistrationNumberPart2',
   '233': 'vehicleIdentificationNumberPart1',

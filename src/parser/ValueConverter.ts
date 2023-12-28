@@ -10,7 +10,6 @@ export class ValueConverter {
       case DataType.Timestamp:
         const unix = arraySegment.readBigUInt64BE(0);
         const dateUnix = new Date(Number(unix));
-        console.log(new Date().toISOString(), arraySegment, unix, dateUnix);
         return dateUnix;
       case DataType.Priority:
         return arraySegment.readInt8(0);
